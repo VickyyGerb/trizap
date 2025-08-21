@@ -40,4 +40,6 @@ test("Octus - descargar y comprimir PDF", async ({ page }) => {
   console.log(`Archivo comprimido en: ${zipPath}`);
 
   await page.waitForTimeout(2000); // opcional para asegurar que todo termine
+
+  await page.pause()
 });
