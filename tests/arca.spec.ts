@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 
 test("Arca", async ({ page, context }) => {
-  // Cambiá esto a false si querés que lo complete automáticamente
   const MANUAL_CUIL = false;
 
   await page.goto("https://www.afip.gob.ar/landing/default.asp");
@@ -17,13 +16,14 @@ test("Arca", async ({ page, context }) => {
   // (Opcional) si hay un botón previo al campo de CUIL
   await Promise.all([
     loginPage.waitForLoadState("networkidle").catch(() => {}),
-    loginPage.getByRole("button", { name: /continuar|siguiente|aceptar/i })
+    loginPage
+      .getByRole("button", { name: /continuar|siguiente|aceptar/i })
       .click()
       .catch(() => {}),
   ]);
 
   // Espera a que el input de CUIL exista y sea visible
-  await loginPage.waitForSelector('#F1\\:username', { state: 'visible' });
+  await loginPage.waitForSelector("#F1\\:username", { state: "visible" });
 
   if (MANUAL_CUIL) {
     // 🔒 Espera indefinidamente hasta que el usuario complete 11 dígitos
@@ -31,15 +31,15 @@ test("Arca", async ({ page, context }) => {
       (id) => {
         const el = document.getElementById(id);
         if (!el || !("value" in el)) return false;
-        const digits = (el.value || "").replace(/\D/g, "");
+        const digits = (String(el.value) || "").replace(/\D/g, "");
         return digits.length === 11;
       },
-      'F1:username',
+      "F1:username",
       { timeout: 0 }
     );
   } else {
     // Autocompletar CUIL
-    await loginPage.locator('#F1\\:username').fill('27480721050');
+    await loginPage.locator("#F1\\:username").fill("27480721050");
   }
 
   // Presionamos Enter para continuar
@@ -53,7 +53,7 @@ test("Arca", async ({ page, context }) => {
   await claveInput.waitFor({ state: "visible" });
 
   // Escribir la clave
-  await claveInput.type('PickyyCiro1712', { delay: 100 });
+  await claveInput.type("PickyyCiro1712", { delay: 100 });
 
   // Presionamos Enter para continuar
   await loginPage.keyboard.press("Enter");
