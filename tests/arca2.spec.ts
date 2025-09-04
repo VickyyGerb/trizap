@@ -45,6 +45,7 @@ test("ARCA", async ({ page }) => {
 
   const fontLocator = frame.locator('font[face="Arial"][size="1"]');
   const primerFont = fontLocator.nth(1);
+  h;
   await primerFont.waitFor({ state: "visible", timeout: 10000 });
 
   const razonSocial = await primerFont.textContent();
