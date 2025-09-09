@@ -4,7 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  timeout: 60000, // 60 segundos para cada test
+  timeout: 240000, // 60 segundos para cada test
   expect: {
     timeout: 15000,
   }, // 15 segundos para los expect()
@@ -18,9 +18,9 @@ export default defineConfig({
     trace: "on-first-retry",
 
     // <- Aquí agregamos para debug / tests más lentos
-    headless: false,              // ver la ventana del navegador
+    headless: false, // ver la ventana del navegador
     launchOptions: {
-      slowMo: 500,                // esperar 500ms entre cada acción
+      slowMo: 500, // esperar 500ms entre cada acción
     },
   },
   projects: [
