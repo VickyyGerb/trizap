@@ -14,7 +14,7 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
   if (!fs.existsSync(csrsFolder)) fs.mkdirSync(csrsFolder, { recursive: true });
 
   // ===== Navegar al portal AFIP para consultar CUIT =====
-  await page.goto(
+  /* await page.goto(
     "https://seti.afip.gob.ar/padron-puc-constancia-internet/ConsultaConstanciaAction.do",
     { waitUntil: "networkidle" }
   );
@@ -43,12 +43,27 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
     },
     { timeout: 0 }
   );
-  console.log("CAPTCHA ingresado correctamente.");
+  console.log("CAPTCHA ingresado correctamente."); 
 
   await frame.locator("#btnConsultar").click();
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(5000); */
 
-  const fontLocator = frame.locator('font[face="Arial"][size="1"]');
+  // ===== Nombres dinámicos para archivos =====
+
+  // ===== Ir a landing AFIP e iniciar sesión =====
+  await page.goto("https://www.afip.gob.ar/landing/default.asp");
+  const loginPopupPromise = page.waitForEvent("popup");
+  await page.getByRole("link", { name: "Iniciar sesión" }).click();
+  const loginPage = await loginPopupPromise;
+
+  await loginPage.getByRole("spinbutton").fill(CUIT);
+  await loginPage.getByRole("button", { name: "Siguiente" }).click();
+  await loginPage
+    .locator('input[type="password"]:visible')
+    .fill("PickyyCiro1712");
+  await loginPage.getByRole("button", { name: "Ingresar" }).click();
+
+  const fontLocator = loginPage.locator(".text-primary"); //ver por que no anda!!!!
   const primerFont = fontLocator.nth(1);
   await primerFont.waitFor({ state: "visible", timeout: 10000 });
   const razonSocial = (await primerFont.textContent())?.trim();
@@ -57,7 +72,6 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
   if (!razonSocial) throw new Error("No se pudo obtener la razón social.");
   const razonSocial2 = razonSocial.replace(/\s+/g, "_");
 
-  // ===== Nombres dinámicos para archivos =====
   const clavePrivada = path.join(
     csrsFolder,
     `MiClavePrivada${razonSocial2}_${año}.key`
@@ -77,19 +91,6 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
       `-out "${csrPath}"`
   );
   console.log(`CSR generado: ${csrPath}`);
-
-  // ===== Ir a landing AFIP e iniciar sesión =====
-  await page.goto("https://www.afip.gob.ar/landing/default.asp");
-  const loginPopupPromise = page.waitForEvent("popup");
-  await page.getByRole("link", { name: "Iniciar sesión" }).click();
-  const loginPage = await loginPopupPromise;
-
-  await loginPage.getByRole("spinbutton").fill(CUIT);
-  await loginPage.getByRole("button", { name: "Siguiente" }).click();
-  await loginPage
-    .locator('input[type="password"]:visible')
-    .fill("PickyyCiro1712");
-  await loginPage.getByRole("button", { name: "Ingresar" }).click();
 
   // ===== Administración de certificados =====
   await loginPage
