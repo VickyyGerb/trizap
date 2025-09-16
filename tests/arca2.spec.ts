@@ -1,9 +1,11 @@
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
-test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({ page }) => {
+test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
+  page,
+}) => {
   const año = new Date().getFullYear();
   const CUIT = "27480721050";
 
@@ -17,7 +19,9 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({ page }) 
     { waitUntil: "networkidle" }
   );
 
-  const iframeElement = await page.waitForSelector("iframe", { timeout: 10000 });
+  const iframeElement = await page.waitForSelector("iframe", {
+    timeout: 10000,
+  });
   const frame = await iframeElement.contentFrame();
   if (!frame) throw new Error("No se pudo obtener el frame del iframe.");
 
@@ -32,7 +36,9 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({ page }) 
 
   await frame.waitForFunction(
     () => {
-      const captchaInput = document.getElementById("captchaField") as HTMLInputElement;
+      const captchaInput = document.getElementById(
+        "captchaField"
+      ) as HTMLInputElement;
       return captchaInput && captchaInput.value.length === 5;
     },
     { timeout: 0 }
@@ -52,8 +58,14 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({ page }) 
   const razonSocial2 = razonSocial.replace(/\s+/g, "_");
 
   // ===== Nombres dinámicos para archivos =====
-  const clavePrivada = path.join(csrsFolder, `MiClavePrivada${razonSocial2}_${año}.key`);
-  const csrPath = path.join(csrsFolder, `MiPedidoCSR${razonSocial2}_${año}.csr`);
+  const clavePrivada = path.join(
+    csrsFolder,
+    `MiClavePrivada${razonSocial2}_${año}.key`
+  );
+  const csrPath = path.join(
+    csrsFolder,
+    `MiPedidoCSR${razonSocial2}_${año}.csr`
+  );
 
   // ===== Generar clave privada y CSR automáticamente =====
   execSync(`openssl genrsa -out "${clavePrivada}" 2048`);
@@ -74,11 +86,15 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({ page }) 
 
   await loginPage.getByRole("spinbutton").fill(CUIT);
   await loginPage.getByRole("button", { name: "Siguiente" }).click();
-  await loginPage.locator('input[type="password"]:visible').fill("PickyyCiro1712");
+  await loginPage
+    .locator('input[type="password"]:visible')
+    .fill("PickyyCiro1712");
   await loginPage.getByRole("button", { name: "Ingresar" }).click();
 
   // ===== Administración de certificados =====
-  await loginPage.getByRole("combobox", { name: "Buscador" }).fill("certificados dig");
+  await loginPage
+    .getByRole("combobox", { name: "Buscador" })
+    .fill("certificados dig");
   const adminPopupPromise = loginPage.waitForEvent("popup");
   await loginPage.getByRole("link", { name: "Administración de" }).click();
   const adminPage = await adminPopupPromise;
@@ -87,7 +103,7 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({ page }) 
   await adminPage.waitForTimeout(2000);
 
   // ===== Crear alias y subir CSR =====
-const alias = `CERTIFICADO${razonSocial2}_${Date.now()}`;
+  const alias = `CERTIFICADO${razonSocial2}_${Date.now()}`;
   const aliasInput = adminPage.locator("#txtAliasCertificado");
   await aliasInput.click();
   await aliasInput.fill(alias);
@@ -97,7 +113,6 @@ const alias = `CERTIFICADO${razonSocial2}_${Date.now()}`;
 
   await page.waitForTimeout(1500); // Esperar un segundo extra para que AFIP procese el archivo
 
-
   // ===== ESPERAR BOTÓN "Agregar alias" HABILITADO =====
   await adminPage.locator("#cmdIngresar").click();
 
@@ -105,22 +120,36 @@ const alias = `CERTIFICADO${razonSocial2}_${Date.now()}`;
 
   await adminPage.waitForTimeout(2000);
 
- const aliasRows = adminPage.locator("table tr td:first-child"); // columna Alias
-await aliasRows.last().waitFor({ state: "visible", timeout: 10000 });
+  const aliasRows = adminPage.locator("table tr td:first-child"); // columna Alias
+  await aliasRows.last().waitFor({ state: "visible", timeout: 10000 });
 
-const lastAlias = await aliasRows.last().textContent();
-console.log("Último alias creado:", lastAlias?.trim());
+  const lastAlias = await aliasRows.last().textContent();
+  console.log("Último alias creado:", lastAlias?.trim());
 
-// ===== Descargar el PFX correspondiente al último alias =====
-await adminPage.getByRole(`link`, { name: "Ver" }).nth(0).click();
-await adminPage.waitForTimeout(2000);
-const downloadPromise = adminPage.waitForEvent("download");
-await adminPage.getByRole("button", { name: "Descargar" }).click();
-const download = await downloadPromise;
+  // ===== Descargar el CRT correspondiente al último alias =====
+  await adminPage.getByRole(`link`, { name: "Ver" }).nth(0).click();
+  await adminPage.waitForTimeout(2000);
+  const downloadPromise = adminPage.waitForEvent("download");
+  await adminPage.getByRole("button", { name: "Descargar" }).click();
+  const download = await downloadPromise;
+  const crtPath = path.join(
+    csrsFolder,
+    `CertificadoDN_${razonSocial2}_${año}.crt`
+  );
+  await download.saveAs(crtPath);
 
-const pfxFile = path.join(csrsFolder, `Certificado_${lastAlias?.trim()}_${año}.pfx`);
-await download.saveAs(pfxFile);
-console.log(`PFX descargado correctamente: ${pfxFile}`);
+  console.log(`CRT descargado correctamente: ${crtPath}`);
+  // ===== Generar PFX a partir del CRT descargado =====
+  const pfxPath = path.join(
+    csrsFolder,
+    `Certificado_${razonSocial2}_${año}.pfx`
+  );
+
+  execSync(
+    `openssl pkcs12 -export -out "${pfxPath}" -inkey "${clavePrivada}" -in "${crtPath}" -passout pass:`
+  );
+
+  console.log(`PFX generado localmente: ${pfxPath}`);
 
   console.log("✅ Flujo completo: CSR generado, subido y PFX descargado.");
   await page.pause();
