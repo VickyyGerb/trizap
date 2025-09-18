@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulario fijo</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input { width: 300px; padding: 5px; font-size: 16px; }
+    button { margin-top: 15px; padding: 10px 20px; font-size: 16px; }
+    #resultados { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; }
+  </style>
+</head>
+<body>
+
+  <h1>Formulario de prueba</h1>
+
+  <label for="empresa">QuitEmpresa (SI ES PARA UNA PERSONA FISICA, INGRESE SU CUIL)</label>
+  <input id="empresa" type="text" placeholder="Opcional..." />
+
+  <label for="persona">QuilPersona</label>
+  <input id="persona" type="text" placeholder="Ingrese persona..." />
+
+  <label for="clave">ClaveFiscal</label>
+  <input id="clave" type="password" placeholder="Ingrese clave..." />
+
+  <button onclick="mostrarResultados()">Mostrar resultados</button>
+
+  <div id="resultados"></div>
+
+  <script>
+    function mostrarResultados() {
+        const empresa = document.getElementById("empresa").value;
+      const persona = document.getElementById("persona").value;
+      const clave = document.getElementById("clave").value;
+
+      document.getElementById("resultados").innerHTML = `
+        <p><strong>QuitEmpresa:</strong> ${empresa}</p>
+        <p><strong>QuilPersona:</strong> ${persona}</p>
+        <p><strong>ClaveFiscal:</strong> ${clave}</p>
+      `;
+    }
+  </script>
+
+</body>
+</html>

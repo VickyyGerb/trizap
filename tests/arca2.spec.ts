@@ -7,7 +7,6 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
   page,
 }) => {
   const año = new Date().getFullYear();
-  const CUIT = "27480721050";
 
   // ===== Carpeta fija para CSR y clave privada =====
   const csrsFolder = path.join(__dirname, "../csrs");
@@ -50,23 +49,36 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
 
   // ===== Nombres dinámicos para archivos =====
 
-  // ===== Ir a landing AFIP e iniciar sesión =====
+  await page.goto("file:///C:/Users/tomyg/Documents/Programaci%C3%B3n/Playwright/trizap2/trizap/index.html")
+
+  await page.waitForSelector('#resultados p');
+  const resultados = await page.$$eval('#resultados p', elements => {
+  
+    return elements.map(p => p.textContent.split(':')[1].trim());
+  });
+
+  console.log(resultados);
+
+  let [CUIT, CUIL, clave] = resultados;
+
+  console.log(`Empresa: ${CUIT}, Persona: ${CUIL}, Clave: ${clave}`);
+
+
+
   await page.goto("https://www.afip.gob.ar/landing/default.asp");
   const loginPopupPromise = page.waitForEvent("popup");
   await page.getByRole("link", { name: "Iniciar sesión" }).click();
   const loginPage = await loginPopupPromise;
 
-  await loginPage.getByRole("spinbutton").fill(CUIT);
+  await loginPage.getByRole("spinbutton").fill(CUIL);
   await loginPage.getByRole("button", { name: "Siguiente" }).click();
   await loginPage
     .locator('input[type="password"]:visible')
-    .fill("PickyyCiro1712");
+    .fill(clave);
   await loginPage.getByRole("button", { name: "Ingresar" }).click();
 
-  const fontLocator = loginPage.locator(".text-primary"); //ver por que no anda!!!!
-  const primerFont = fontLocator.nth(1);
-  await primerFont.waitFor({ state: "visible", timeout: 10000 });
-  const razonSocial = (await primerFont.textContent())?.trim();
+  const fontLocator = loginPage.locator('nav#cabeceraAFIPlogoNegro strong.text-primary'); //ver por que no anda!!!!
+  const razonSocial = (await fontLocator.textContent())?.trim();
   console.log("Razón social obtenida:", razonSocial);
 
   if (!razonSocial) throw new Error("No se pudo obtener la razón social.");
