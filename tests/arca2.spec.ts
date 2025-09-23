@@ -8,53 +8,17 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
 }) => {
   const año = new Date().getFullYear();
 
-  // ===== Carpeta fija para CSR y clave privada =====
+  // ===== Carpeta fija para CSR =====
   const csrsFolder = path.join(__dirname, "../csrs");
   if (!fs.existsSync(csrsFolder)) fs.mkdirSync(csrsFolder, { recursive: true });
 
-  // ===== Navegar al portal AFIP para consultar CUIT =====
-  /* await page.goto(
-    "https://seti.afip.gob.ar/padron-puc-constancia-internet/ConsultaConstanciaAction.do",
-    { waitUntil: "networkidle" }
+  await page.goto(
+    "file:///C:Users/Estudiante/Desktop/Vickyy/playwright/Trizap/index.html"
   );
 
-  const iframeElement = await page.waitForSelector("iframe", {
-    timeout: 10000,
-  });
-  const frame = await iframeElement.contentFrame();
-  if (!frame) throw new Error("No se pudo obtener el frame del iframe.");
-
-  const input = frame.locator("#cuit");
-  await input.waitFor({ state: "visible", timeout: 10000 });
-  await input.fill(CUIT);
-  await input.evaluate((el) => {
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-  });
-  console.log("CUIT ingresado correctamente.");
-
-  await frame.waitForFunction(
-    () => {
-      const captchaInput = document.getElementById(
-        "captchaField"
-      ) as HTMLInputElement;
-      return captchaInput && captchaInput.value.length === 5;
-    },
-    { timeout: 0 }
-  );
-  console.log("CAPTCHA ingresado correctamente."); 
-
-  await frame.locator("#btnConsultar").click();
-  await page.waitForTimeout(5000); */
-
-  // ===== Nombres dinámicos para archivos =====
-
-  await page.goto("file:///C:/Users/tomyg/Documents/Programaci%C3%B3n/Playwright/trizap2/trizap/index.html")
-
-  await page.waitForSelector('#resultados p');
-  const resultados = await page.$$eval('#resultados p', elements => {
-  
-    return elements.map(p => p.textContent.split(':')[1].trim());
+  await page.waitForSelector("#resultados p");
+  const resultados = await page.$$eval("#resultados p", (elements) => {
+    return elements.map((p) => p.textContent.split(":")[1].trim());
   });
 
   console.log(resultados);
@@ -63,8 +27,6 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
 
   console.log(`Empresa: ${CUIT}, Persona: ${CUIL}, Clave: ${clave}`);
 
-
-
   await page.goto("https://www.afip.gob.ar/landing/default.asp");
   const loginPopupPromise = page.waitForEvent("popup");
   await page.getByRole("link", { name: "Iniciar sesión" }).click();
@@ -72,12 +34,12 @@ test("ARCA - Generación de CSR y descarga de PFX desde AFIP", async ({
 
   await loginPage.getByRole("spinbutton").fill(CUIL);
   await loginPage.getByRole("button", { name: "Siguiente" }).click();
-  await loginPage
-    .locator('input[type="password"]:visible')
-    .fill(clave);
+  await loginPage.locator('input[type="password"]:visible').fill(clave);
   await loginPage.getByRole("button", { name: "Ingresar" }).click();
 
-  const fontLocator = loginPage.locator('nav#cabeceraAFIPlogoNegro strong.text-primary'); //ver por que no anda!!!!
+  const fontLocator = loginPage.locator(
+    "nav#cabeceraAFIPlogoNegro strong.text-primary"
+  ); //ya anda!!
   const razonSocial = (await fontLocator.textContent())?.trim();
   console.log("Razón social obtenida:", razonSocial);
 
